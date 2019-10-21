@@ -10,7 +10,7 @@ jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://build-a-blog:buildit@localhost:8889/build-a-blog'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://blogz:blogzapp@localhost:8889/blogz'
 app.config['SQLALCHEMY_ECHO'] = True
 db = SQLAlchemy(app)
 app.secret_key = "Iwishtherewerentants"
@@ -20,12 +20,25 @@ class Blog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(120))
     body = db.Column(db.String(5000))
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     #submitted = db.Column(db.Boolean)
 
-    def __init__(self, title, body):
+    def __init__(self, title, body, owner):
         self.title = title
         self.body = body
+        self.owner = owner
         #self.submitted = False
+
+class User(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String,(120))
+    password = db.Column(db.String(120))
+    blogs = db.relationship('Blog', backref='owner')
+
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
 
 @app.route('/')
 def index():
@@ -42,7 +55,7 @@ def newpost():
         if len(blog_name) == 0 or len(blog_content) == 0:
             flash("Woah, there! You can't leave that empty!", "error_message")
         else:
-            new_blog = Blog(blog_name, blog_content)
+            new_blog = Blog(blog_name, blog_content, owner)
             db.session.add(new_blog)
             db.session.commit()
 
@@ -55,7 +68,21 @@ def show_the_blog():
     blog_id = request.args.get('id')
     new_blog = Blog.query.get(blog_id)
     return render_template('show-blog.html'.format(new_blog), myblog=new_blog)
-        
+
+@app.route('/signup')
+
+
+
+@app.route('/login', methods=["POST"])
+def lets_logout():
+    del session['email']
+    return redirect('/blog')
+
+
+@app.route('/index')
+
+
+
     # tasks = Task.query.filter_by(completed=False).all()
     # completed_tasks = Task.query.filter_by(completed=True).all()
     # return render_template('thepages.html',title="Blogapalooza", 
