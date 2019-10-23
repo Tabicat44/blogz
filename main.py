@@ -12,7 +12,7 @@ app.secret_key = "Iwishtherewerentants"
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(120))
+    username = db.Column(db.String(120), unique=True)
     password = db.Column(db.String(120))
     blogs = db.relationship('Blog', backref='owner')
 
@@ -27,25 +27,34 @@ class Blog(db.Model):
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     submitted = db.Column(db.Boolean)
 
-    def __init__(self, title, body):
+    def __init__(self, title, body, owner):
         self.title = title
         self.body = body
         self.owner = owner
         self.submitted = False
 
+@app.before_request
+def require_login():
+    allowed_routes = ['login', 'blog', 'index', 'signup']
+    if request.endpoint not in allowed_routes and 'username' not in session:
+        return redirect('login')
 
-@app.route('/')
-def index():
 
-    theblog = Blog.query.all()
-    return render_template('blog.html', myblog=theblog)
+@app.route('/blog', methods=['POST', 'GET'])
+def index():    
+    blog_id = str(request.args.get("id"))
+    this_blog = Blog.query.get(blog_id)
+    owner = User.query.filter_by(username='username').first()
+
+    retrievedblog = Blog.query.all()
+    return render_template('blog.html', theblog=retrievedblog, perblog = this_blog)
 
 @app.route('/newpost', methods=['POST', 'GET'])
 def newpost():
     if request.method == 'POST':
         blog_name = request.form['newtitle']
         blog_content = request.form['newpost']
-        blog_owner = request.form['']
+        blog_owner = User.query.filter_by(username=session['username']).first()
 
         if len(blog_name) == 0 or len(blog_content) == 0:
             flash("Woah, there! You can't leave that empty!", "error_message")
@@ -54,27 +63,71 @@ def newpost():
             db.session.add(new_blog)
             db.session.commit()
 
-            return redirect('/blog?id=' + str(new_blog.id))
+            return redirect('/blog?id=' + str(new_blog.id))            
+
     return render_template('newpost.html')
 
-@app.route('/show-blog', methods=['GET'])
-def show_the_blog():
 
-    blog_id = request.args.get('id')
-    new_blog = Blog.query.get(blog_id)
-    return render_template('show-blog.html'.format(new_blog), myblog=new_blog)
+@app.route('/signup', methods=['POST', 'GET'])
+def signup():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        verify = request.form['verify']
 
-#@app.route('/signup')
+        existing_user = User.query.filter_by(username=username).first()
+        if len(username) == 0 or len(password) == 0 or len(verify) == 0:
+            flash("I'm so sorry, but you cannot leave anything here blank.")
+        
+        elif password != verify:
+            flash('What the heck!?  The "password" and "verify" fields were supposed to match!')
+        elif not existing_user:
+            new_user = User(username, password)
+            db.session.add(new_user)
+            db.session.commit()
+            session['username'] = username
+            return redirect('/blog')
+        # else:
+        #     return "<h1>That username is taken. Sorry! Try something else.</h1>"
 
+    return render_template('signup.html')
+        
 
+@app.route('/login', methods=['POST', 'GET'])
+def login():
+    if request.method =='POST':
+        the_username = request.form['username']
+        the_password = request.form['password']
+        user = User.query.filter_by(username=the_username).first()
 
-@app.route('/login', methods=['GET'])
+        if not user:
+            flash("Oops!  That username does not exist here!")
+        elif user.password != the_password:
+            flash("Whoopsie daisy. That ain't right.")
+        # if user and user.password == the_password:
+        #     session['username'] = the_username
+        #     flash("Logg in")
+        #     return redirect('/newpost')
+        else:
+            session['username'] = the_username
+            flash("Logged in")
+            return redirect('/newpost')
+
+    return render_template('login.html')
+
+@app.route('/logout', methods=['POST'])
 def lets_logout():
-    del session['email']
+    del session['username']
     return redirect('/blog')
 
 
-#@app.route('/index')
+
+@app.route('/singleUser')
+def home_page():
+    theowner = User.query.all()
+    return render_template('singleUser.html', givenowner = theowner)
+
+
 
 
 

@@ -7,7 +7,7 @@
                     color: plum;
                     display: flex;
                     justify-content: space-between;
-                    padding-right: 1400px;
+                    padding-right: 1200px;
                     
                 }
                 .error_message{
@@ -18,13 +18,21 @@
                     text-align: center;
                     color:rebeccapurple;
                 }
+
+                .words{
+                    text-align: center;
+                }
         </style>
     </head>
 <body>
     <header>
         <div class="clicky-things">
-                <a href='/'>Main Blog Page</a>
+                <a href='/blog'>Main Blog Page</a>
                 <a href='/newpost'>Add New Blog Entry</a>
+                <a href='/login'>Login</a>
+                <a href='/signup'>Make an Account</a>
+                <a href='/logout'>Log Out</a>
+                <a href='/singleUser'>Individual Blogs</a>
         </div>
 
     </header>
@@ -39,6 +47,8 @@
     {% endfor %}
     {% endwith %}
     </ul>
+
+
 
 </body>
 </html>

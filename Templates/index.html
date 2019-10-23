@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="heading">
+        <h1>Authors</h1>
+    </div>
+        {% if all_artists|length ==0 %}
+        <p>No authors yet</p>
+        {% else %}
+            {% for artist in all_artists %}
+            <h3>{{artist.username}}</h3>
+            {{% endfor %}}
+        {{% endif %}}
+
+{% endblock %}
