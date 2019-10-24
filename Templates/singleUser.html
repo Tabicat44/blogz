@@ -3,12 +3,13 @@
 
 {% block content %}
 <h1 class="heading">Blog Users</h1>
-    {% if givenowner|length > 0 %}
+    {% if givenowner|length == 0 %}
     <p class="words">Oops!  No users yet!</p>
     {% else %}
     <hr>
         {% for owner in givenowner %}
-        <h3><a href="/singleUser?id={{owner.id}}">{{owner.id}}</a></h3>
+        <h3 class="heading"><a href="/singleUser?id={{owner.id}}">{{owner.username}}</a></h3>
+        <!-- <h3>{{owner.username}}</h3> -->
     </hr>
         {% endfor %}
     {% endif %}

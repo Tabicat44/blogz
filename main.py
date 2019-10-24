@@ -35,19 +35,44 @@ class Blog(db.Model):
 
 @app.before_request
 def require_login():
-    allowed_routes = ['login', 'blog', 'index', 'signup']
+    allowed_routes = ['login', 'signup','blog', 'usersblogs']
     if request.endpoint not in allowed_routes and 'username' not in session:
-        return redirect('login')
+        return redirect('/login')
+
+
+@app.route('/login', methods=['POST', 'GET'])
+def login():
+    if request.method =='POST':
+        the_username = request.form['username']
+        the_password = request.form['password']
+        user = User.query.filter_by(username=the_username).first()
+
+        # if not user:
+        #     flash("Oops!  That username does not exist here!")
+        # elif user.password != the_password:
+        #     flash("Whoopsie daisy. That ain't right.")
+        if user and user.password == the_password:
+            session['username'] = the_username
+            flash("Logg in")
+            return redirect('/newpost')
+        else:
+            flash("Username or password is incorrect")
+            # session['username'] = the_username
+            # flash("Logged in")
+            # return redirect('/newpost')
+
+    return render_template('login.html')
 
 
 @app.route('/blog', methods=['POST', 'GET'])
-def index():    
+def home():    
     blog_id = str(request.args.get("id"))
     this_blog = Blog.query.get(blog_id)
-    owner = User.query.filter_by(username='username').first()
+    owner = User.query.filter_by(username=session['username']).first()
 
     retrievedblog = Blog.query.all()
-    return render_template('blog.html', theblog=retrievedblog, perblog = this_blog)
+    takenowner = User.query.all()
+    return render_template('blog.html', theblog=retrievedblog, perblog = this_blog, theowner=takenowner)
 
 @app.route('/newpost', methods=['POST', 'GET'])
 def newpost():
@@ -93,40 +118,25 @@ def signup():
     return render_template('signup.html')
         
 
-@app.route('/login', methods=['POST', 'GET'])
-def login():
-    if request.method =='POST':
-        the_username = request.form['username']
-        the_password = request.form['password']
-        user = User.query.filter_by(username=the_username).first()
-
-        if not user:
-            flash("Oops!  That username does not exist here!")
-        elif user.password != the_password:
-            flash("Whoopsie daisy. That ain't right.")
-        # if user and user.password == the_password:
-        #     session['username'] = the_username
-        #     flash("Logg in")
-        #     return redirect('/newpost')
-        else:
-            session['username'] = the_username
-            flash("Logged in")
-            return redirect('/newpost')
-
-    return render_template('login.html')
 
 @app.route('/logout', methods=['POST'])
 def lets_logout():
     del session['username']
     return redirect('/blog')
 
-
-
 @app.route('/singleUser')
-def home_page():
+def list_all_users():
+    if request.args.get('id'):
+        blog_id = str(request.args.get('id'))
+        blog = Blog.query.get(blog_id)
+        retrievedblog = Blog.query.filter_by(owner=blog).all()
+        return render_template('usersblogs.html', theblog = retrievedblog)
     theowner = User.query.all()
+    useful_id = request.args.get(id)
+    # if request.method == 'POST':
+    #     return redirect('/blog?id=' + str(the_owner.id))
     return render_template('singleUser.html', givenowner = theowner)
-
+        
 
 
 
